@@ -84,6 +84,7 @@
 <body>
   <div class="container">
     <h1>History MCQ Generator</h1>
+
     <label for="topic">Enter Topic</label>
     <input type="text" id="topic" placeholder="e.g. Revolt of 1857">
 
@@ -92,11 +93,30 @@
 
     <button id="submitBtn">Generate Questions</button>
 
-    <div class="response-box" id="responseBox">Enter details above and click Generate.</div>
+    <div class="response-box" id="responseBox">
+      Enter details above and click Generate.
+    </div>
   </div>
 
   <script>
     const WEBHOOK = 'https://hook.eu2.make.com/4p5p4ols3xlddqt3410epuou46e6w76t';
+    const CASHFREE_URL = 'https://payments.cashfree.com/forms/modernhistorymcq';
+
+    const params = new URLSearchParams(window.location.search);
+    const paymentDone = params.get('paid') === '1';
+
+    // 🔒 FORCE PAYMENT BEFORE ACCESS
+    if (!paymentDone) {
+      const returnUrl =
+        window.location.origin +
+        window.location.pathname +
+        '?paid=1';
+
+      window.location.replace(
+        CASHFREE_URL + `?return_url=${encodeURIComponent(returnUrl)}`
+      );
+    }
+
     document.getElementById('submitBtn').addEventListener('click', async () => {
       const topic = document.getElementById('topic').value.trim();
       const difficulty = document.getElementById('difficulty').value.trim();
@@ -116,8 +136,10 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
+
         const data = await res.text();
-        responseBox.innerText = `📘 Topic: ${topic}\n🎯 Difficulty: ${difficulty}\n\n${data}`;
+        responseBox.innerText =
+          `📘 Topic: ${topic}\n🎯 Difficulty: ${difficulty}\n\n${data}`;
       } catch (err) {
         responseBox.innerText = 'Error sending data. Please try again.';
       }
