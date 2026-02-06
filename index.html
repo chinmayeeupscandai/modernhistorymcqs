@@ -45,6 +45,7 @@
       border-radius: 8px;
       outline: none;
       font-size: 16px;
+      box-sizing: border-box;
     }
     input:focus, select:focus {
       border-color: #ff4d94;
@@ -79,10 +80,21 @@
       overflow-y: auto;
       white-space: pre-wrap;
     }
+
+    /* Logic-based displays */
+    #mainPortal { display: none; }
+    #paymentGate { display: block; text-align: center; }
   </style>
 </head>
 <body>
-  <div class="container">
+
+  <div class="container" id="paymentGate">
+    <h1>Unlock History MCQ Generator</h1>
+    <p style="text-align: center;">Gain access to the premium modern history question generator.</p>
+    <button onclick="redirectToPayment()">Pay to Unlock</button>
+  </div>
+
+  <div class="container" id="mainPortal">
     <h1>History MCQ Generator</h1>
 
     <label for="topic">Enter Topic</label>
@@ -100,23 +112,36 @@
 
   <script>
     const WEBHOOK = 'https://hook.eu2.make.com/4p5p4ols3xlddqt3410epuou46e6w76t';
-    const CASHFREE_URL = 'https://payments.cashfree.com/forms/modernhistorymcq';
+    const CASHFREE_LINK = 'https://payments.cashfree.com/forms/modernhistory';
 
-    const params = new URLSearchParams(window.location.search);
-    const paymentDone = params.get('paid') === '1';
+    window.onload = function() {
+      const params = new URLSearchParams(window.location.search);
+      const status = params.get('payment_status');
+      const paidParam = params.get('paid');
+      const alreadyPaid = localStorage.getItem('history_paid') === 'true';
 
-    // 🔒 FORCE PAYMENT BEFORE ACCESS
-    if (!paymentDone) {
-      const returnUrl =
-        window.location.origin +
-        window.location.pathname +
-        '?paid=1';
+      // Unlock if coming back from successful payment OR already saved in browser
+      if (status === 'SUCCESS' || status === 'success' || paidParam === '1' || alreadyPaid) {
+        unlockPortal();
+      }
+    };
 
-      window.location.replace(
-        CASHFREE_URL + `?return_url=${encodeURIComponent(returnUrl)}`
-      );
+    function redirectToPayment() {
+      window.location.href = CASHFREE_LINK;
     }
 
+    function unlockPortal() {
+      localStorage.setItem('history_paid', 'true');
+      document.getElementById('paymentGate').style.display = 'none';
+      document.getElementById('mainPortal').style.display = 'block';
+
+      // Cleans the URL of "success" parameters for a cleaner look
+      if (window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+
+    // Original Submit Logic
     document.getElementById('submitBtn').addEventListener('click', async () => {
       const topic = document.getElementById('topic').value.trim();
       const difficulty = document.getElementById('difficulty').value.trim();
